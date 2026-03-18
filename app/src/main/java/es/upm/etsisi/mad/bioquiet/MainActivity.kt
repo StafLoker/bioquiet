@@ -1,17 +1,22 @@
 package es.upm.etsisi.mad.bioquiet
 
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.view.View
 import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
@@ -35,6 +40,7 @@ class MainActivity : AppCompatActivity(), LocationListener {
     private lateinit var zepaMapManager: ZepaMapManager
     private lateinit var noiseMonitor: NoiseMonitor
     private var currentUserPoint: GeoPoint? = null
+    private var locationOverlayAdded = false
 
     companion object {
         const val LOG_TAG = "MainActivity"
@@ -56,9 +62,11 @@ class MainActivity : AppCompatActivity(), LocationListener {
         locationHelper = LocationHelper(this, locationManager)
 
         // OSM config
-        Configuration.getInstance().userAgentValue = packageName
-        Configuration.getInstance()
-            .load(applicationContext, getSharedPreferences("osm", MODE_PRIVATE))
+        val osmConfig = Configuration.getInstance()
+        osmConfig.userAgentValue = packageName
+        osmConfig.osmdroidBasePath = cacheDir
+        osmConfig.osmdroidTileCache = java.io.File(cacheDir, "osmdroid")
+        osmConfig.load(applicationContext, getSharedPreferences("osm", MODE_PRIVATE))
 
         // Map setup
         Log.d(LOG_TAG, "Setup map")
@@ -143,10 +151,12 @@ class MainActivity : AppCompatActivity(), LocationListener {
             currentUserPoint = GeoPoint(location.latitude, location.longitude)
             map.controller.setCenter(currentUserPoint)
         } else {
-            Log.e(LOG_TAG, "Failed to obtain user location")
-            Toast.makeText(this, "No podemos encontrar tu localizacion", Toast.LENGTH_LONG).show()
+            Log.w(LOG_TAG, "No cached location yet, waiting for first GPS fix")
         }
-        map.overlays.add(buildUserLocationOverlay(this, map))
+        if (!locationOverlayAdded) {
+            map.overlays.add(buildUserLocationOverlay(this, map))
+            locationOverlayAdded = true
+        }
         map.invalidate()
     }
 
@@ -169,7 +179,23 @@ class MainActivity : AppCompatActivity(), LocationListener {
                     noiseMonitor.start()
                 } else {
                     Log.w(LOG_TAG, "Audio permission denied")
-                    noiseMonitor.onPermissionDenied()
+                    val canAskAgain = ActivityCompat.shouldShowRequestPermissionRationale(
+                        this, android.Manifest.permission.RECORD_AUDIO
+                    )
+                    if (!canAskAgain) {
+                        AlertDialog.Builder(this)
+                            .setTitle("Permiso de micrófono necesario")
+                            .setMessage("Para monitorizar el ruido necesitas conceder el permiso de micrófono desde Ajustes.")
+                            .setPositiveButton("Ir a Ajustes") { _, _ ->
+                                startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                    data = Uri.fromParts("package", packageName, null)
+                                })
+                            }
+                            .setNegativeButton("Cancelar", null)
+                            .show()
+                    } else {
+                        noiseMonitor.onPermissionDenied()
+                    }
                 }
             }
         }
@@ -177,8 +203,13 @@ class MainActivity : AppCompatActivity(), LocationListener {
 
     override fun onLocationChanged(location: Location) {
         Log.d(LOG_TAG, "Location updated: [${location.latitude}][${location.longitude}]")
+        val wasNull = currentUserPoint == null
         currentUserPoint = GeoPoint(location.latitude, location.longitude)
-        map.controller.animateTo(currentUserPoint)
+        if (wasNull) {
+            map.controller.setCenter(currentUserPoint)
+        } else {
+            map.controller.animateTo(currentUserPoint)
+        }
     }
 
     override fun onDestroy() {
