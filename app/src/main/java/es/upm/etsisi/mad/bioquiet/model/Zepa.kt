@@ -1,21 +1,5 @@
 package es.upm.etsisi.mad.bioquiet.model
 
-data class Zepa(
-    val id: String,
-    val name: String,
-    val noiseThresholds: NoiseThresholds,
-    val areaHa: Double?,
-    val dateSpa: String?,
-    val spaLegalRef: String?,
-    val description: String?,
-    val quality: String?,
-    val habitats: List<Habitat>,
-    val species: List<Species>,
-    val impacts: List<Impact>,
-    val management: List<Management>,
-    val geometry: GeoJsonGeometry
-)
-
 data class NoiseThresholds(
     val dbSafe: Int,
     val dbWarning: Int
@@ -59,4 +43,20 @@ data class Management(
 data class GeoJsonGeometry(
     val type: String,
     val coordinates: Any
+)
+
+data class Zepa(
+    val id: String,
+    val name: String,
+    val noiseThresholds: NoiseThresholds,
+    val areaHa: Double?,
+    val dateSpa: String?,
+    val spaLegalRef: String?,
+    val description: String?,
+    val quality: String?,
+    val habitats: List<Habitat>,
+    val species: List<Species>,
+    val impacts: List<Impact>,
+    val management: List<Management>,
+    val geometry: GeoJsonGeometry
 )

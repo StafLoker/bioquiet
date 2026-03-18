@@ -15,8 +15,6 @@
    <a href="https://github.com/<url-repo>/blob/main/LICENSE"><img src="https://img.shields.io/github/license/<url-repo>.svg?style=flat" alt="license"/></a>
 
    <p>SHORT DESCRIPTION</p>
-
-<img src="screenshot.png" width="824" alt="Screenshot">
 </div>
 
 

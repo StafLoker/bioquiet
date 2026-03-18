@@ -11,40 +11,6 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 object ZepaMapper {
-    fun toZepa(json: String): List<Zepa> {
-        val root = JSONObject(json)
-        val data = root.getJSONArray("data")
-        val result = mutableListOf<Zepa>()
-
-        for (i in 0 until data.length()) {
-            result.add(parseZepa(data.getJSONObject(i)))
-        }
-
-        return result
-    }
-
-    private fun parseZepa(obj: JSONObject): Zepa {
-        val noise = obj.getJSONObject("noise_thresholds")
-        return Zepa(
-            id = obj.getString("id"),
-            name = obj.getString("name"),
-            noiseThresholds = NoiseThresholds(
-                dbSafe = noise.getInt("db_safe"),
-                dbWarning = noise.getInt("db_warning")
-            ),
-            areaHa = obj.optDouble("area_ha").takeUnless { it.isNaN() },
-            dateSpa = obj.optString("date_spa").ifEmpty { null },
-            spaLegalRef = obj.optString("spa_legal_ref").ifEmpty { null },
-            description = obj.optString("description").ifEmpty { null },
-            quality = obj.optString("quality").ifEmpty { null },
-            habitats = parseHabitats(obj.optJSONArray("habitats")),
-            species = parseSpecies(obj.optJSONArray("species")),
-            impacts = parseImpacts(obj.optJSONArray("impacts")),
-            management = parseManagement(obj.optJSONArray("management")),
-            geometry = parseGeometry(obj.getJSONObject("geometry"))
-        )
-    }
-
     private fun parseHabitats(arr: JSONArray?): List<Habitat> {
         if (arr == null) return emptyList()
         return (0 until arr.length()).map { i ->
@@ -109,5 +75,39 @@ object ZepaMapper {
             type = obj.getString("type"),
             coordinates = obj.getJSONArray("coordinates")
         )
+    }
+
+    private fun parseZepa(obj: JSONObject): Zepa {
+        val noise = obj.getJSONObject("noise_thresholds")
+        return Zepa(
+            id = obj.getString("id"),
+            name = obj.getString("name"),
+            noiseThresholds = NoiseThresholds(
+                dbSafe = noise.getInt("db_safe"),
+                dbWarning = noise.getInt("db_warning")
+            ),
+            areaHa = obj.optDouble("area_ha").takeUnless { it.isNaN() },
+            dateSpa = obj.optString("date_spa").ifEmpty { null },
+            spaLegalRef = obj.optString("spa_legal_ref").ifEmpty { null },
+            description = obj.optString("description").ifEmpty { null },
+            quality = obj.optString("quality").ifEmpty { null },
+            habitats = parseHabitats(obj.optJSONArray("habitats")),
+            species = parseSpecies(obj.optJSONArray("species")),
+            impacts = parseImpacts(obj.optJSONArray("impacts")),
+            management = parseManagement(obj.optJSONArray("management")),
+            geometry = parseGeometry(obj.getJSONObject("geometry"))
+        )
+    }
+
+    fun toZepa(json: String): List<Zepa> {
+        val root = JSONObject(json)
+        val data = root.getJSONArray("data")
+        val result = mutableListOf<Zepa>()
+
+        for (i in 0 until data.length()) {
+            result.add(parseZepa(data.getJSONObject(i)))
+        }
+
+        return result
     }
 }

@@ -1,5 +1,6 @@
 package es.upm.etsisi.mad.bioquiet
 
+import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
@@ -13,23 +14,22 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import org.osmdroid.api.IGeoPoint
-import org.osmdroid.config.Configuration
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory
-import org.osmdroid.util.GeoPoint
-import org.osmdroid.views.MapView
-import android.Manifest
-import es.upm.etsisi.mad.bioquiet.model.GeoJsonGeometry
 import es.upm.etsisi.mad.bioquiet.data.remote.ApiClient
+import es.upm.etsisi.mad.bioquiet.model.GeoJsonGeometry
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import androidx.lifecycle.lifecycleScope
 import org.json.JSONArray
+import org.osmdroid.api.IGeoPoint
+import org.osmdroid.config.Configuration
 import org.osmdroid.events.MapListener
 import org.osmdroid.events.ScrollEvent
 import org.osmdroid.events.ZoomEvent
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Polygon
 
 class MainActivity : AppCompatActivity(), LocationListener {
@@ -164,7 +164,10 @@ class MainActivity : AppCompatActivity(), LocationListener {
     }
 
     override fun onLocationChanged(location: Location) {
-        Log.d(LOG_TAG, "Location updated: [${location.altitude}][${location.latitude}][${location.longitude}]")
+        Log.d(
+            LOG_TAG,
+            "Location updated: [${location.altitude}][${location.latitude}][${location.longitude}]"
+        )
     }
 
     fun fetchAndDrawZepas() {
@@ -192,6 +195,7 @@ class MainActivity : AppCompatActivity(), LocationListener {
             "MultiPolygon" -> (0 until coords.length()).map { i ->
                 coords.getJSONArray(i).getJSONArray(0)
             }
+
             else -> return
         }
 
