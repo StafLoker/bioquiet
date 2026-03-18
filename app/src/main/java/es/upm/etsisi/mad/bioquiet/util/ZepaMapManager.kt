@@ -121,6 +121,7 @@ class ZepaMapManager(
             else -> return
         }
 
+        val allPoints = mutableListOf<GeoPoint>()
         for (ring in rings) {
             val geoPoints = (0 until ring.length()).map { j ->
                 val point = ring.getJSONArray(j)
@@ -136,10 +137,11 @@ class ZepaMapManager(
             }
             map.overlays.add(polygon)
             zepaPolygons.add(Pair(polygon, zepa))
-
-            val centerLat = geoPoints.map { it.latitude }.average()
-            val centerLon = geoPoints.map { it.longitude }.average()
-            map.overlays.add(ZepaLabelOverlay(GeoPoint(centerLat, centerLon), zepa.name))
+            allPoints.addAll(geoPoints)
         }
+
+        val centerLat = allPoints.map { it.latitude }.average()
+        val centerLon = allPoints.map { it.longitude }.average()
+        map.overlays.add(ZepaLabelOverlay(GeoPoint(centerLat, centerLon), zepa.name))
     }
 }

@@ -15,44 +15,39 @@ class ZepaLabelOverlay(
 
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = 0xFF1B5E20.toInt()
-        textSize = 36f
         typeface = Typeface.DEFAULT_BOLD
     }
 
     private val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = 0xCCFFFFFF.toInt()
-    }
-
-    private val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = 0xFF1B5E20.toInt()
-        style = Paint.Style.STROKE
-        strokeWidth = 1.5f
+        color = 0x99FFFFFF.toInt()
     }
 
     override fun draw(canvas: Canvas, mapView: MapView, shadow: Boolean) {
         if (shadow) return
 
-        // Solo mostrar etiquetas a partir de zoom 10
-        if (mapView.zoomLevelDouble < 10.0) return
+        val zoom = mapView.zoomLevelDouble
+        if (zoom < 10.0) return
+
+        val textSize = (14f + (zoom - 10.0) * 3f).toFloat().coerceIn(14f, 28f)
+        textPaint.textSize = textSize
 
         val point = mapView.projection.toPixels(position, null)
 
-        val padding = 8f
+        val padding = 4f
         val textWidth = textPaint.measureText(text)
-        val textHeight = textPaint.textSize
+        val fm = textPaint.fontMetrics
+        val textHeight = fm.descent - fm.ascent
 
         val left = point.x - textWidth / 2 - padding
         val top = point.y - textHeight / 2 - padding
         val right = point.x + textWidth / 2 + padding
         val bottom = point.y + textHeight / 2 + padding
 
-        val rect = RectF(left, top, right, bottom)
-        canvas.drawRoundRect(rect, 6f, 6f, bgPaint)
-        canvas.drawRoundRect(rect, 6f, 6f, strokePaint)
+        canvas.drawRoundRect(RectF(left, top, right, bottom), 4f, 4f, bgPaint)
         canvas.drawText(
             text,
             point.x - textWidth / 2,
-            point.y + textHeight / 2 - padding / 2,
+            point.y - fm.ascent / 2 - fm.descent / 2,
             textPaint
         )
     }
