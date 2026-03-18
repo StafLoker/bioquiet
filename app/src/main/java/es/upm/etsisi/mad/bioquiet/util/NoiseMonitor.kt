@@ -120,7 +120,7 @@ class NoiseMonitor(
                     setAudioSource(MediaRecorder.AudioSource.MIC)
                     setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
                     setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
-                    setOutputFile("/dev/null")
+                    setOutputFile(activity.cacheDir.absolutePath + "/noise_tmp.3gp")
                 }
             recorder?.prepare()
             recorder?.start()
