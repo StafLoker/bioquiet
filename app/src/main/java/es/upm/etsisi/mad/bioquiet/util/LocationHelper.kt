@@ -16,7 +16,6 @@ class LocationHelper(
 ) {
     companion object {
         const val LOG_TAG = "LocationHelper"
-        const val PERMISSION_CODE = 2
         const val UPDATE_INTERVAL_MS = 5000L
         const val UPDATE_DISTANCE_M = 5f
     }
@@ -28,18 +27,6 @@ class LocationHelper(
                 ActivityCompat.checkSelfPermission(
                     activity, Manifest.permission.ACCESS_COARSE_LOCATION
                 ) == PackageManager.PERMISSION_GRANTED
-
-    fun requestPermissions() {
-        Log.d(LOG_TAG, "Requesting location permissions")
-        ActivityCompat.requestPermissions(
-            activity,
-            arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ),
-            PERMISSION_CODE
-        )
-    }
 
     @SuppressLint("MissingPermission")
     fun startUpdates(listener: LocationListener) {
@@ -61,7 +48,11 @@ class LocationHelper(
     @SuppressLint("MissingPermission")
     fun getLastKnownLocation(): Location? {
         if (!hasPermission()) return null
-        val providers = listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER, LocationManager.PASSIVE_PROVIDER)
+        val providers = listOf(
+            LocationManager.GPS_PROVIDER,
+            LocationManager.NETWORK_PROVIDER,
+            LocationManager.PASSIVE_PROVIDER
+        )
         return providers.mapNotNull { locationManager.getLastKnownLocation(it) }
             .maxByOrNull { it.time }
     }

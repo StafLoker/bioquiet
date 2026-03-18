@@ -1,12 +1,13 @@
 package es.upm.etsisi.mad.bioquiet
 
-import android.content.Context
+import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
@@ -33,6 +34,7 @@ import org.osmdroid.events.ZoomEvent
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
+import java.io.File
 
 class MainActivity : AppCompatActivity(), LocationListener {
     private lateinit var map: MapView
@@ -44,6 +46,12 @@ class MainActivity : AppCompatActivity(), LocationListener {
 
     companion object {
         const val LOG_TAG = "MainActivity"
+        const val PERMISSION_CODE = 1
+        val REQUIRED_PERMISSIONS = arrayOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.RECORD_AUDIO
+        )
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,30 +66,22 @@ class MainActivity : AppCompatActivity(), LocationListener {
         }
 
         // Location
-        val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
         locationHelper = LocationHelper(this, locationManager)
 
         // OSM config
         val osmConfig = Configuration.getInstance()
         osmConfig.userAgentValue = packageName
         osmConfig.osmdroidBasePath = cacheDir
-        osmConfig.osmdroidTileCache = java.io.File(cacheDir, "osmdroid")
+        osmConfig.osmdroidTileCache = File(cacheDir, "osmdroid")
         osmConfig.load(applicationContext, getSharedPreferences("osm", MODE_PRIVATE))
 
         // Map setup
         Log.d(LOG_TAG, "Setup map")
         map = findViewById(R.id.map)
         map.setTileSource(TileSourceFactory.MAPNIK)
-        map.setBuiltInZoomControls(false)
         map.setMultiTouchControls(true)
         map.controller.setZoom(15.0)
-
-        if (locationHelper.hasPermission()) {
-            locationHelper.startUpdates(this)
-            setupLocationOnMap()
-        } else {
-            locationHelper.requestPermissions()
-        }
 
         // ZepaMapManager
         val statusDot = findViewById<View>(R.id.statusDot)
@@ -132,20 +132,46 @@ class MainActivity : AppCompatActivity(), LocationListener {
                     Snackbar.LENGTH_LONG
                 ).show()
             },
-            onPermissionDenied = {
-                Toast.makeText(this, "Sin permiso de micrófono no se puede monitorizar el ruido", Toast.LENGTH_LONG).show()
-            },
             getNoiseLevel = { _, db -> getString(R.string.noise_level_db, db) }
         )
-        noiseMonitor.start()
+
+        val missingPermissions = REQUIRED_PERMISSIONS.filter {
+            ActivityCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+        }
+        if (missingPermissions.isEmpty()) {
+            onAllPermissionsGranted()
+        } else {
+            ActivityCompat.requestPermissions(
+                this,
+                missingPermissions.toTypedArray(),
+                PERMISSION_CODE
+            )
+        }
+    }
+
+    private fun onAllPermissionsGranted() {
+        if (locationHelper.hasPermission()) {
+            locationHelper.startUpdates(this)
+            setupLocationOnMap()
+        }
+        if (noiseMonitor.hasPermission()) {
+            noiseMonitor.start()
+        }
     }
 
     private fun setupLocationOnMap() {
         Log.d(LOG_TAG, "Fetch user start location")
         val bundle = intent.getBundleExtra("locationBundle")
-        @Suppress("DEPRECATION")
-        val location: Location? =
-            bundle?.getParcelable("location") ?: locationHelper.getLastKnownLocation()
+
+        val bundleLocation: Location? = bundle?.let {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                it.getParcelable("location", Location::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                it.getParcelable("location")
+            }
+        }
+        val location: Location? = bundleLocation ?: locationHelper.getLastKnownLocation()
         if (location != null) {
             Log.d(LOG_TAG, "Start location: [${location.latitude}][${location.longitude}]")
             currentUserPoint = GeoPoint(location.latitude, location.longitude)
@@ -166,37 +192,42 @@ class MainActivity : AppCompatActivity(), LocationListener {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        when (requestCode) {
-            LocationHelper.PERMISSION_CODE -> {
-                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    locationHelper.startUpdates(this)
-                    setupLocationOnMap()
-                }
+        if (requestCode != PERMISSION_CODE) return
+
+        val denied = mutableListOf<String>()
+        permissions.forEachIndexed { i, perm ->
+            if (perm != null && grantResults.getOrNull(i) != PackageManager.PERMISSION_GRANTED) {
+                denied.add(perm)
             }
-            NoiseMonitor.PERMISSION_CODE -> {
-                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Log.d(LOG_TAG, "Audio permission granted, starting noise monitor")
-                    noiseMonitor.start()
-                } else {
-                    Log.w(LOG_TAG, "Audio permission denied")
-                    val canAskAgain = ActivityCompat.shouldShowRequestPermissionRationale(
-                        this, android.Manifest.permission.RECORD_AUDIO
-                    )
-                    if (!canAskAgain) {
-                        AlertDialog.Builder(this)
-                            .setTitle("Permiso de micrófono necesario")
-                            .setMessage("Para monitorizar el ruido necesitas conceder el permiso de micrófono desde Ajustes.")
-                            .setPositiveButton("Ir a Ajustes") { _, _ ->
-                                startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                    data = Uri.fromParts("package", packageName, null)
-                                })
-                            }
-                            .setNegativeButton("Cancelar", null)
-                            .show()
-                    } else {
-                        noiseMonitor.onPermissionDenied()
+        }
+
+        onAllPermissionsGranted()
+
+        if (denied.isNotEmpty()) {
+            Log.w(LOG_TAG, "Permissions denied: $denied")
+            val permanentlyDenied = denied.filter {
+                !ActivityCompat.shouldShowRequestPermissionRationale(this, it)
+            }
+            if (permanentlyDenied.isNotEmpty()) {
+                val names = permanentlyDenied.map { perm ->
+                    when (perm) {
+                        Manifest.permission.RECORD_AUDIO -> "Micrófono"
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION -> "Ubicación"
+
+                        else -> perm
                     }
-                }
+                }.distinct().joinToString(", ")
+                AlertDialog.Builder(this)
+                    .setTitle("Permisos necesarios")
+                    .setMessage("La app necesita acceso a: $names. Actívalos desde Ajustes.")
+                    .setPositiveButton("Ir a Ajustes") { _, _ ->
+                        startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = Uri.fromParts("package", packageName, null)
+                        })
+                    }
+                    .setNegativeButton("Cancelar", null)
+                    .show()
             }
         }
     }

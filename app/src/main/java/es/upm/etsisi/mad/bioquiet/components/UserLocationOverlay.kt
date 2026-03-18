@@ -17,7 +17,11 @@ fun buildUserLocationOverlay(context: Context, map: MapView): MyLocationNewOverl
     Canvas(dot).apply {
         val r = sizePx / 2f
         drawCircle(r, r, r, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE })
-        drawCircle(r, r, r - borderPx, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0xFF1A73E8.toInt() })
+        drawCircle(
+            r,
+            r,
+            r - borderPx,
+            Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0xFF1A73E8.toInt() })
     }
     return MyLocationNewOverlay(GpsMyLocationProvider(context), map).apply {
         enableMyLocation()
