@@ -45,18 +45,24 @@ class LocationHelper(
     fun startUpdates(listener: LocationListener) {
         if (!hasPermission()) return
         Log.d(LOG_TAG, "Starting location updates")
-        locationManager.requestLocationUpdates(
-            LocationManager.GPS_PROVIDER,
-            UPDATE_INTERVAL_MS,
-            UPDATE_DISTANCE_M,
-            listener
-        )
+        val providers = listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER)
+        for (provider in providers) {
+            if (locationManager.isProviderEnabled(provider)) {
+                locationManager.requestLocationUpdates(
+                    provider,
+                    UPDATE_INTERVAL_MS,
+                    UPDATE_DISTANCE_M,
+                    listener
+                )
+            }
+        }
     }
 
     @SuppressLint("MissingPermission")
     fun getLastKnownLocation(): Location? {
         if (!hasPermission()) return null
-        return locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-            ?: locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+        val providers = listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER, LocationManager.PASSIVE_PROVIDER)
+        return providers.mapNotNull { locationManager.getLastKnownLocation(it) }
+            .maxByOrNull { it.time }
     }
 }
