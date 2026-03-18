@@ -243,6 +243,18 @@ class MainActivity : AppCompatActivity(), LocationListener {
         }
     }
 
+    override fun onPause() {
+        super.onPause()
+        noiseMonitor.pause()
+        map.onPause()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        noiseMonitor.resume()
+        map.onResume()
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         noiseMonitor.stop()

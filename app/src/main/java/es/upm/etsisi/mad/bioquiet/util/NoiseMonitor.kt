@@ -1,10 +1,12 @@
 package es.upm.etsisi.mad.bioquiet.util
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.media.AudioFormat
+import android.media.AudioRecord
 import android.media.MediaRecorder
-import android.os.Build
 import android.util.Log
 import android.view.View
 import android.widget.TextView
@@ -20,9 +22,19 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.log10
+import kotlin.math.sqrt
 
-private fun amplitude2db(amplitude: Double): Double =
-    if (amplitude > 0) 20 * log10(amplitude) else 0.0
+private const val SAMPLE_RATE = 44100
+private const val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
+private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
+private const val MAX_16BIT = 32767.0
+private const val DBFS_TO_SPL_OFFSET = 90.0
+
+private fun rmsToDb(rms: Double): Double {
+    if (rms <= 0) return 0.0
+    val dbFs = 20.0 * log10(rms / MAX_16BIT)
+    return (dbFs + DBFS_TO_SPL_OFFSET).coerceAtLeast(0.0)
+}
 
 class NoiseMonitor(
     private val activity: FragmentActivity,
@@ -35,6 +47,8 @@ class NoiseMonitor(
 ) {
     companion object {
         const val LOG_TAG = "NoiseMonitor"
+        const val WARNING_WINDOW = 5
+        const val WARNING_THRESHOLD = 3
     }
 
     fun hasPermission(): Boolean =
@@ -42,101 +56,143 @@ class NoiseMonitor(
             activity, Manifest.permission.RECORD_AUDIO
         ) == PackageManager.PERMISSION_GRANTED
 
-    private var recorder: MediaRecorder? = null
+    @Volatile private var capturing = false
+    @Volatile private var latestDb = 0.0
+    private var captureThread: Thread? = null
+
     private var monitorJob: Job? = null
-    private var isRecording = false
     private var alertShown = false
+    private val warningHistory = ArrayDeque<Boolean>(WARNING_WINDOW)
 
     fun start() {
         if (!hasPermission()) return
+        startCapture()
+        monitorJob?.cancel()
         monitorJob = lifecycleScope.launch(Dispatchers.IO) {
+            delay(500)
             while (isActive) {
                 delay(1000)
 
                 val zepa = withContext(Dispatchers.Main) { getCurrentZepa() }
                 if (zepa == null) {
-                    Log.d(LOG_TAG, "User outside ZEPA, stopping recorder")
-                    stopRecorder()
-                    withContext(Dispatchers.Main) {
-                        noiseCard.visibility = View.GONE
-                    }
+                    withContext(Dispatchers.Main) { noiseCard.visibility = View.GONE }
                     alertShown = false
+                    warningHistory.clear()
                     continue
                 }
 
-                val alreadyRecording = isRecording
-                startRecorder()
-                if (!alreadyRecording) continue // First cycle: wait one tick for the buffer to fill up
-
-                val db = amplitude2db(recorder?.maxAmplitude?.toDouble() ?: 0.0)
+                val db = latestDb
                 Log.d(
                     LOG_TAG,
                     "Inside ZEPA '${zepa.name}': ${db.toInt()} dB (safe=${zepa.noiseThresholds.dbSafe}, warning=${zepa.noiseThresholds.dbWarning})"
                 )
+
+                // Track whether this tick exceeded warning threshold
+                val isWarningTick = db >= zepa.noiseThresholds.dbWarning
+                if (warningHistory.size >= WARNING_WINDOW) warningHistory.removeFirst()
+                warningHistory.addLast(isWarningTick)
+
+                // Sustained warning: enough ticks above threshold in the window
+                val sustained = warningHistory.count { it } >= WARNING_THRESHOLD
 
                 withContext(Dispatchers.Main) {
                     noiseCard.visibility = View.VISIBLE
                     noiseText.text = getNoiseLevel("noise_level_db", db.toInt())
 
                     when {
-                        db >= zepa.noiseThresholds.dbWarning -> {
-                            Log.w(
-                                LOG_TAG,
-                                "Noise level exceeded warning threshold in '${zepa.name}'"
-                            )
+                        db >= zepa.noiseThresholds.dbWarning ->
                             noiseCard.setCardBackgroundColor(Color.RED)
-                            if (!alertShown) {
-                                alertShown = true
-                                onWarning(zepa)
-                            }
-                        }
-
-                        db >= zepa.noiseThresholds.dbSafe -> {
-                            alertShown = false
+                        db >= zepa.noiseThresholds.dbSafe ->
                             noiseCard.setCardBackgroundColor(Color.YELLOW)
-                        }
-
-                        else -> {
-                            alertShown = false
+                        else ->
                             noiseCard.setCardBackgroundColor(Color.GREEN)
-                        }
+                    }
+
+                    // Alert only on sustained noise
+                    if (sustained && !alertShown) {
+                        alertShown = true
+                        onWarning(zepa)
+                    }
+                    if (!sustained) {
+                        alertShown = false
                     }
                 }
             }
         }
     }
 
-    fun stop() {
+    fun pause() {
         monitorJob?.cancel()
-        stopRecorder()
+        monitorJob = null
+        stopCapture()
+        warningHistory.clear()
+        alertShown = false
     }
 
-    private fun startRecorder() {
-        if (isRecording) return
-        try {
-            @Suppress("DEPRECATION")
-            recorder =
-                (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) MediaRecorder(activity) else MediaRecorder()).apply {
-                    setAudioSource(MediaRecorder.AudioSource.MIC)
-                    setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
-                    setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
-                    setOutputFile(activity.cacheDir.absolutePath + "/noise_tmp.3gp")
-                }
-            recorder?.prepare()
-            recorder?.start()
-            isRecording = true
-        } catch (e: Exception) {
-            Log.e(LOG_TAG, "Failed to start recorder (no microphone?): ${e.message}")
-            recorder?.release()
-            recorder = null
+    fun resume() {
+        if (!capturing) start()
+    }
+
+    fun stop() {
+        pause()
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun startCapture() {
+        if (capturing) return
+
+        val minBuf = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT)
+        if (minBuf <= 0) {
+            Log.e(LOG_TAG, "Bad AudioRecord min buffer size: $minBuf")
+            return
         }
+
+        val ar = try {
+            AudioRecord(
+                MediaRecorder.AudioSource.MIC,
+                SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT,
+                minBuf * 2
+            )
+        } catch (e: Exception) {
+            Log.e(LOG_TAG, "AudioRecord init failed: ${e.message}", e)
+            return
+        }
+
+        if (ar.state != AudioRecord.STATE_INITIALIZED) {
+            Log.e(LOG_TAG, "AudioRecord not initialized, releasing")
+            ar.release()
+            return
+        }
+
+        capturing = true
+        ar.startRecording()
+        Log.d(LOG_TAG, "AudioRecord capture started")
+
+        val readSize = SAMPLE_RATE / 10 // ~100ms of audio
+        captureThread = Thread({
+            val buf = ShortArray(readSize)
+            while (capturing) {
+                val n = ar.read(buf, 0, buf.size)
+                if (n > 0) {
+                    var sum = 0.0
+                    for (i in 0 until n) {
+                        val s = buf[i].toDouble()
+                        sum += s * s
+                    }
+                    latestDb = rmsToDb(sqrt(sum / n))
+                }
+            }
+            try { ar.stop() } catch (_: Exception) {}
+            ar.release()
+            Log.d(LOG_TAG, "AudioRecord capture stopped and released")
+        }, "NoiseCapture").also { it.start() }
     }
 
-    private fun stopRecorder() {
-        if (!isRecording) return
-        recorder?.stop()
-        recorder?.release()
-        recorder = null
-        isRecording = false
+    private fun stopCapture() {
+        if (!capturing) return
+        capturing = false
+        captureThread?.join(3000)
+        captureThread = null
+        latestDb = 0.0
     }
 }
