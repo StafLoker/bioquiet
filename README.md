@@ -9,7 +9,11 @@
 </div>
 
 <div align="center">
+  <p>
+      <a href="https://github.com/StafLoker/bioquiet/releases/latest/download/bioquiet.apk"><img src="https://img.shields.io/badge/Download-APK-green?style=for-the-badge&logo=android" alt="Download APK" /></a>
+   </p>
    <a href="https://github.com/StafLoker/bioquiet/releases"><img src="https://img.shields.io/github/release-pre/StafLoker/bioquiet.svg?style=flat" alt="latest version" /></a>
+   <a href="https://github.com/StafLoker/bioquiet/actions/workflows/release.yml"><img src="https://github.com/StafLoker/bioquiet/actions/workflows/release.yml/badge.svg" alt="Release" /></a>
 
    <p>Aplicación Android para monitorizar el nivel de ruido en Zonas de Especial Protección para las Aves (ZEPA). Avisa al usuario cuando supera los umbrales de ruido permitidos para proteger la fauna local.</p>
 

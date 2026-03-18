@@ -37,16 +37,25 @@ jobs:
       - name: Build release APK
         run: ./gradlew assembleRelease
 
+      - name: Rename APK
+        id: apk
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          SRC=$(find app/build/outputs/apk/release -name '*.apk' | head -1)
+          DEST="app/build/outputs/apk/release/bioquiet-${VERSION}.apk"
+          mv "$SRC" "$DEST"
+          echo "path=$DEST" >> $GITHUB_OUTPUT
+
       - name: Upload APK artifact
-        uses: actions/upload-artifact@7
+        uses: actions/upload-artifact@v7
         with:
           name: apk
-          path: app/build/outputs/apk/release/*.apk
+          path: ${{ steps.apk.outputs.path }}
 
       - name: Attest build provenance
         uses: actions/attest-build-provenance@v3
         with:
-          subject-path: app/build/outputs/apk/release/*.apk
+          subject-path: ${{ steps.apk.outputs.path }}
 
   github-release:
     needs: build-apk
