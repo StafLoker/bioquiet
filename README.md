@@ -24,8 +24,6 @@
 - Monitorización del nivel de ruido en tiempo real (dB)
 - Alertas visuales (verde / amarillo / rojo) según los umbrales de cada ZEPA
 - Notificación cuando se supera el umbral de advertencia
-- Indicador de estado de conexión con el servidor
-- Punto de ubicación del usuario en el mapa
 
 
 # Installation
@@ -43,5 +41,9 @@
   <tr>
     <td><img src="assets/screenshot_1.png" width="200" /></td>
     <td><img src="assets/screenshot_2.png" width="200" /></td>
+  </tr>
+  <tr>
+    <td><img src="assets/screenshot_3.png" width="200" /></td>
+    <td></td>
   </tr>
 </table>
