@@ -87,6 +87,9 @@ jobs:
           name: apk
           path: release-artifacts
 
+      - name: Create fixed-name copy for direct download
+        run: cp release-artifacts/bioquiet-*.apk release-artifacts/bioquiet.apk
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -98,4 +101,6 @@ jobs:
 
             ## Changelog
             ${{ steps.changelog.outputs.notes }}
-          files: release-artifacts/*.apk
+          files: |
+            release-artifacts/bioquiet-*.apk
+            release-artifacts/bioquiet.apk
