@@ -1,0 +1,62 @@
+package es.upm.etsisi.mad.bioquiet.util
+
+import android.Manifest
+import android.annotation.SuppressLint
+import android.content.pm.PackageManager
+import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
+import android.util.Log
+import androidx.core.app.ActivityCompat
+import androidx.fragment.app.FragmentActivity
+
+class LocationHelper(
+    private val activity: FragmentActivity,
+    private val locationManager: LocationManager
+) {
+    companion object {
+        const val LOG_TAG = "LocationHelper"
+        const val PERMISSION_CODE = 2
+        const val UPDATE_INTERVAL_MS = 5000L
+        const val UPDATE_DISTANCE_M = 5f
+    }
+
+    fun hasPermission(): Boolean =
+        ActivityCompat.checkSelfPermission(
+            activity, Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED ||
+                ActivityCompat.checkSelfPermission(
+                    activity, Manifest.permission.ACCESS_COARSE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
+
+    fun requestPermissions() {
+        Log.d(LOG_TAG, "Requesting location permissions")
+        ActivityCompat.requestPermissions(
+            activity,
+            arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ),
+            PERMISSION_CODE
+        )
+    }
+
+    @SuppressLint("MissingPermission")
+    fun startUpdates(listener: LocationListener) {
+        if (!hasPermission()) return
+        Log.d(LOG_TAG, "Starting location updates")
+        locationManager.requestLocationUpdates(
+            LocationManager.GPS_PROVIDER,
+            UPDATE_INTERVAL_MS,
+            UPDATE_DISTANCE_M,
+            listener
+        )
+    }
+
+    @SuppressLint("MissingPermission")
+    fun getLastKnownLocation(): Location? {
+        if (!hasPermission()) return null
+        return locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+            ?: locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+    }
+}
