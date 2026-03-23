@@ -19,9 +19,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.BioQuiet">
         <activity
-            android:name=".bottom_nav_menu"
-            android:exported="false" />
-        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
