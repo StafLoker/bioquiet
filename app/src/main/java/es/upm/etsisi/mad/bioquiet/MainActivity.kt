@@ -26,6 +26,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import es.upm.etsisi.mad.bioquiet.components.buildUserLocationOverlay
+import es.upm.etsisi.mad.bioquiet.model.Zepa
 import es.upm.etsisi.mad.bioquiet.util.LocationHelper
 import es.upm.etsisi.mad.bioquiet.util.NavigationManager
 import es.upm.etsisi.mad.bioquiet.util.NoiseMonitor
@@ -49,6 +50,7 @@ class MainActivity : AppCompatActivity(), LocationListener {
     private lateinit var noiseMonitor: NoiseMonitor
     private var currentUserPoint: GeoPoint? = null
     private var locationOverlayAdded = false
+    private var currentZepa: Zepa? = null // Memory for the active ZEPA zone
 
     companion object {
         const val LOG_TAG = "MainActivity"
@@ -143,7 +145,7 @@ class MainActivity : AppCompatActivity(), LocationListener {
             noiseCard = findViewById(R.id.noiseCard),
             noiseText = findViewById(R.id.noiseLevel),
             lifecycleScope = lifecycleScope,
-            getCurrentZepa = { zepaMapManager.getCurrentZepa(currentUserPoint) },
+            getCurrentZepa = { currentZepa },
             onWarning = { zepa ->
                 Snackbar.make(
                     findViewById(R.id.main),
@@ -255,6 +257,10 @@ class MainActivity : AppCompatActivity(), LocationListener {
         Log.d(LOG_TAG, "Location updated: [${location.latitude}][${location.longitude}]")
         val wasNull = currentUserPoint == null
         currentUserPoint = GeoPoint(location.latitude, location.longitude)
+
+        // Saving current ZEPA zone
+        currentZepa = zepaMapManager.getCurrentZepa(currentUserPoint)
+
         if (wasNull) {
             map.controller.setCenter(currentUserPoint)
         } else {
