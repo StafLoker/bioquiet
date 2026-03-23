@@ -63,6 +63,7 @@ class NoiseMonitor(
     private var monitorJob: Job? = null
     private var alertShown = false
     private val warningHistory = ArrayDeque<Boolean>(WARNING_WINDOW)
+    private val storageManager = NoiseStorageManager(activity)
 
     fun start() {
         if (!hasPermission()) return
@@ -86,6 +87,9 @@ class NoiseMonitor(
                     LOG_TAG,
                     "Inside ZEPA '${zepa.name}': ${db.toInt()} dB (safe=${zepa.noiseThresholds.dbSafe}, warning=${zepa.noiseThresholds.dbWarning})"
                 )
+
+                // Saving into a csv
+                storageManager.saveRecord(zepa.name, db.toInt())
 
                 // Track whether this tick exceeded warning threshold
                 val isWarningTick = db >= zepa.noiseThresholds.dbWarning

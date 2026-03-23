@@ -13,6 +13,7 @@ import android.provider.Settings
 import android.util.Log
 import android.view.View
 import android.widget.ProgressBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
@@ -21,11 +22,15 @@ import androidx.core.app.ActivityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import es.upm.etsisi.mad.bioquiet.components.buildUserLocationOverlay
+import es.upm.etsisi.mad.bioquiet.model.Zepa
 import es.upm.etsisi.mad.bioquiet.util.LocationHelper
+import es.upm.etsisi.mad.bioquiet.util.NavigationManager
 import es.upm.etsisi.mad.bioquiet.util.NoiseMonitor
+import es.upm.etsisi.mad.bioquiet.util.NoiseStorageManager
 import es.upm.etsisi.mad.bioquiet.util.ZepaMapManager
 import org.osmdroid.config.Configuration
 import org.osmdroid.events.MapListener
@@ -38,11 +43,14 @@ import java.io.File
 
 class MainActivity : AppCompatActivity(), LocationListener {
     private lateinit var map: MapView
+
+    private lateinit var navigationManager: NavigationManager
     private lateinit var locationHelper: LocationHelper
     private lateinit var zepaMapManager: ZepaMapManager
     private lateinit var noiseMonitor: NoiseMonitor
     private var currentUserPoint: GeoPoint? = null
     private var locationOverlayAdded = false
+    private var currentZepa: Zepa? = null // Memory for the active ZEPA zone
 
     companion object {
         const val LOG_TAG = "MainActivity"
@@ -63,6 +71,19 @@ class MainActivity : AppCompatActivity(), LocationListener {
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
+        }
+
+        // Setup Menu navigation
+        val mapContainer = findViewById<View>(R.id.mapContainer)
+        val statsContainer = findViewById<View>(R.id.statsContainer)
+        val bottomNavigation = findViewById<BottomNavigationView>(R.id.bottomNavigation)
+
+        val statisticsData = findViewById<TextView>(R.id.statisticsData)
+
+        // Showing csv registers
+        navigationManager = NavigationManager(mapContainer, statsContainer, bottomNavigation) {
+            val storageManager = NoiseStorageManager(this)
+            statisticsData.text = storageManager.getStatsSummary()
         }
 
         // Location
@@ -124,7 +145,7 @@ class MainActivity : AppCompatActivity(), LocationListener {
             noiseCard = findViewById(R.id.noiseCard),
             noiseText = findViewById(R.id.noiseLevel),
             lifecycleScope = lifecycleScope,
-            getCurrentZepa = { zepaMapManager.getCurrentZepa(currentUserPoint) },
+            getCurrentZepa = { currentZepa },
             onWarning = { zepa ->
                 Snackbar.make(
                     findViewById(R.id.main),
@@ -236,6 +257,10 @@ class MainActivity : AppCompatActivity(), LocationListener {
         Log.d(LOG_TAG, "Location updated: [${location.latitude}][${location.longitude}]")
         val wasNull = currentUserPoint == null
         currentUserPoint = GeoPoint(location.latitude, location.longitude)
+
+        // Saving current ZEPA zone
+        currentZepa = zepaMapManager.getCurrentZepa(currentUserPoint)
+
         if (wasNull) {
             map.controller.setCenter(currentUserPoint)
         } else {
