@@ -21,10 +21,12 @@ import androidx.core.app.ActivityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import es.upm.etsisi.mad.bioquiet.components.buildUserLocationOverlay
 import es.upm.etsisi.mad.bioquiet.util.LocationHelper
+import es.upm.etsisi.mad.bioquiet.util.NavigationManager
 import es.upm.etsisi.mad.bioquiet.util.NoiseMonitor
 import es.upm.etsisi.mad.bioquiet.util.ZepaMapManager
 import org.osmdroid.config.Configuration
@@ -38,6 +40,8 @@ import java.io.File
 
 class MainActivity : AppCompatActivity(), LocationListener {
     private lateinit var map: MapView
+
+    private lateinit var navigationManager: NavigationManager
     private lateinit var locationHelper: LocationHelper
     private lateinit var zepaMapManager: ZepaMapManager
     private lateinit var noiseMonitor: NoiseMonitor
@@ -64,6 +68,13 @@ class MainActivity : AppCompatActivity(), LocationListener {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+        // Setup Menu navigation
+        val mapContainer = findViewById<View>(R.id.mapContainer)
+        val statsContainer = findViewById<View>(R.id.statsContainer)
+        val bottomNavigation = findViewById<BottomNavigationView>(R.id.bottomNavigation)
+
+        navigationManager = NavigationManager(mapContainer, statsContainer, bottomNavigation)
 
         // Location
         val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
