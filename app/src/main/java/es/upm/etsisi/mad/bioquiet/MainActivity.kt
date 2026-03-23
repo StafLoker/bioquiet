@@ -13,6 +13,7 @@ import android.provider.Settings
 import android.util.Log
 import android.view.View
 import android.widget.ProgressBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
@@ -28,6 +29,7 @@ import es.upm.etsisi.mad.bioquiet.components.buildUserLocationOverlay
 import es.upm.etsisi.mad.bioquiet.util.LocationHelper
 import es.upm.etsisi.mad.bioquiet.util.NavigationManager
 import es.upm.etsisi.mad.bioquiet.util.NoiseMonitor
+import es.upm.etsisi.mad.bioquiet.util.NoiseStorageManager
 import es.upm.etsisi.mad.bioquiet.util.ZepaMapManager
 import org.osmdroid.config.Configuration
 import org.osmdroid.events.MapListener
@@ -74,7 +76,13 @@ class MainActivity : AppCompatActivity(), LocationListener {
         val statsContainer = findViewById<View>(R.id.statsContainer)
         val bottomNavigation = findViewById<BottomNavigationView>(R.id.bottomNavigation)
 
-        navigationManager = NavigationManager(mapContainer, statsContainer, bottomNavigation)
+        val statisticsData = findViewById<TextView>(R.id.statisticsData)
+
+        // Showing csv registers
+        navigationManager = NavigationManager(mapContainer, statsContainer, bottomNavigation) {
+            val storageManager = NoiseStorageManager(this)
+            statisticsData.text = storageManager.getStatsSummary()
+        }
 
         // Location
         val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager

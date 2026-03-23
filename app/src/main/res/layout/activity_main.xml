@@ -104,9 +104,10 @@ tools:context=".MainActivity">
     app:layout_constraintEnd_toEndOf="parent">
 
     <TextView
+        android:id="@+id/statisticsData"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Empty view"
+        android:text="Calculating statistics..."
         android:textAlignment="center"
         android:textSize="20sp"
         app:layout_constraintTop_toTopOf="parent"

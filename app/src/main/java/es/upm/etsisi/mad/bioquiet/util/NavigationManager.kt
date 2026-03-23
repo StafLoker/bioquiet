@@ -7,7 +7,8 @@ import es.upm.etsisi.mad.bioquiet.R
 class NavigationManager(
     private val mapContainer: View,
     private val statsContainer: View,
-    bottomNavigationView: BottomNavigationView
+    bottomNavigationView: BottomNavigationView,
+    private val onStatsSelected: () -> Unit
 ) {
     init {
         // Configuration when buttons are touched
@@ -18,6 +19,7 @@ class NavigationManager(
                     true
                 }
                 R.id.nav_stats -> {
+                    onStatsSelected()
                     showStats()
                     true
                 }
