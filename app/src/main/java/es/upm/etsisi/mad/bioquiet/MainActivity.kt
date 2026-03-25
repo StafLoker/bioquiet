@@ -32,6 +32,7 @@ import es.upm.etsisi.mad.bioquiet.util.NavigationManager
 import es.upm.etsisi.mad.bioquiet.util.NoiseMonitor
 import es.upm.etsisi.mad.bioquiet.util.NoiseStorageManager
 import es.upm.etsisi.mad.bioquiet.util.ZepaMapManager
+import kotlinx.coroutines.launch
 import org.osmdroid.config.Configuration
 import org.osmdroid.events.MapListener
 import org.osmdroid.events.ScrollEvent
@@ -83,7 +84,15 @@ class MainActivity : AppCompatActivity(), LocationListener {
         // Showing csv registers
         navigationManager = NavigationManager(mapContainer, statsContainer, bottomNavigation) {
             val storageManager = NoiseStorageManager(this)
-            statisticsData.text = storageManager.getStatsSummary()
+
+            // Launching the coroutine here to avoid freezing the UI
+            lifecycleScope.launch {
+                // Read the file in the background safely
+                val summary = storageManager.getStatsSummary()
+
+                // Update the screen text once the file is fully read
+                statisticsData.text = summary
+            }
         }
 
         // Location

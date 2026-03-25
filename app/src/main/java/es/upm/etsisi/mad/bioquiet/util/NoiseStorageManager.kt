@@ -2,6 +2,8 @@ package es.upm.etsisi.mad.bioquiet.util
 
 import android.content.Context
 import android.util.Log
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileWriter
 import java.text.SimpleDateFormat
@@ -13,7 +15,6 @@ class NoiseStorageManager(context: Context) {
     private val file: File = File(context.filesDir, fileName)
 
     init {
-
         // If the file doesn't exist, create it and add the CSV header
         if (!file.exists()) {
             try {
@@ -41,37 +42,42 @@ class NoiseStorageManager(context: Context) {
         }
     }
 
-    fun getStatsSummary(): String {
-        if (!file.exists()) return "No noise data registered yet."
+    // Convert to 'suspend' to safely run on a background thread
+    suspend fun getStatsSummary(): String = withContext(Dispatchers.IO) {
+        if (!file.exists()) return@withContext "No noise data registered yet."
 
-        return try {
-            val lines = file.readLines()
-            if (lines.size <= 1) return "Not enough data registered."
-
+        try {
+            // Using useLines is much more memory-efficient for large files
+            // than readLines() because it reads line by line instead of loading all into RAM.
             var maxDb = 0
             var sumDb = 0
             var count = 0
 
-            // Skip line 0 because it is the header (Date,ZEPA_Zone,Decibels)
-            for (i in 1 until lines.size) {
-                val parts = lines[i].split(",")
-                if (parts.size >= 3) {
-                    // Get the decibels part and convert it to a number
-                    val db = parts[2].trim().toIntOrNull() ?: 0
-                    if (db > maxDb) maxDb = db
-                    sumDb += db
-                    count++
+            file.useLines { lines ->
+                // Skip the header line
+                val dataLines = lines.drop(1)
+
+                for (line in dataLines) {
+                    if (line.isNotBlank()) {
+                        // Safe extraction: get everything after the LAST comma
+                        val dbString = line.substringAfterLast(",")
+                        val db = dbString.trim().toIntOrNull() ?: 0
+
+                        if (db > maxDb) maxDb = db
+                        sumDb += db
+                        count++
+                    }
                 }
             }
 
-            if (count == 0) return "No valid data found."
+            if (count == 0) return@withContext "No valid data found."
 
             val avgDb = sumDb / count
 
-            // Prepare the final text to be displayed on screen
+            // Prepare the final text
             val feedback = if (avgDb > 60) "Warning! High average noise level." else "Good job keeping it quiet!"
 
-            "ZEPA Noise Summary:\n\n" +
+            return@withContext "ZEPA Noise Summary:\n\n" +
                     "Total records: $count\n" +
                     "Max Noise: $maxDb dB\n" +
                     "Average Noise: $avgDb dB\n\n" +
@@ -79,7 +85,7 @@ class NoiseStorageManager(context: Context) {
 
         } catch (e: Exception) {
             Log.e("NoiseStorage", "Error reading CSV: ${e.message}")
-            "Error reading statistics."
+            return@withContext "Error reading statistics."
         }
     }
 }
