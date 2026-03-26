@@ -9,6 +9,7 @@ import android.os.Build
 import android.util.Log
 import android.view.View
 import android.widget.TextView
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.FragmentActivity
@@ -63,15 +64,30 @@ class NoiseMonitor(
         monitorJob?.cancel()
         monitorJob = lifecycleScope.launch(Dispatchers.IO) {
             delay(500)
+
+            // --- MOCK SIMULATION VARIABLES ---
+            var timerSeconds = 0
+            var isMockZepaActive = false
+            // --- END MOCK VARIABLES ---
+
             while (isActive) {
                 delay(1000)
 
-                val zepa = withContext(Dispatchers.Main) { getCurrentZepa() }
+                // --- 10 SECOND MOCK LOGIC ---
+                timerSeconds++
+                if (timerSeconds >= 10) {
+                    isMockZepaActive = !isMockZepaActive
+                    timerSeconds = 0
+                    Log.d(LOG_TAG, "--- MOCK ZEPA STATE CHANGED: Active = $isMockZepaActive ---")
+                }
 
-                // If user is outside any ZEPA zone
-                if (zepa == null) {
+                // We ignore the real GPS Zepa for this test
+                // val realZepa = withContext(Dispatchers.Main) { getCurrentZepa() }
+
+                // If mock simulation says we are OUTSIDE the ZEPA
+                if (!isMockZepaActive) {
                     if (capturing) {
-                        Log.d(LOG_TAG, "User left ZEPA zone. Stopping microphone.")
+                        Log.d(LOG_TAG, "User left MOCK ZEPA zone. Stopping microphone.")
                     }
                     stopListening()
                     withContext(Dispatchers.Main) { noiseCard.visibility = View.GONE }
@@ -80,7 +96,7 @@ class NoiseMonitor(
                     continue
                 }
 
-                // If user is inside a ZEPA zone, ensure microphone is actively listening
+                // If mock simulation says we are INSIDE the ZEPA
                 startListening()
 
                 // Calculate decibels from MediaRecorder's max amplitude
@@ -92,16 +108,18 @@ class NoiseMonitor(
                 }
                 latestDb = db
 
-                Log.d(
-                    LOG_TAG,
-                    "Tracking noise inside ZEPA '${zepa.name}': Amplitude=$maxAmplitude -> ${db.toInt()} dB"
-                )
+                // Mock ZEPA thresholds and name
+                val mockSafeDb = 50.0
+                val mockWarningDb = 70.0
+                val mockZepaName = "MOCK_ZEPA_10_SEC"
+
+                Log.d(LOG_TAG, "Tracking noise inside MOCK ZEPA: Amplitude=$maxAmplitude -> ${db.toInt()} dB")
 
                 // Save record to CSV
-                storageManager.saveRecord(zepa.name, db.toInt())
+                storageManager.saveRecord(mockZepaName, db.toInt())
 
                 // Track whether this tick exceeded warning threshold
-                val isWarningTick = db >= zepa.noiseThresholds.dbWarning
+                val isWarningTick = db >= mockWarningDb
                 if (warningHistory.size >= WARNING_WINDOW) warningHistory.removeFirst()
                 warningHistory.addLast(isWarningTick)
 
@@ -113,19 +131,17 @@ class NoiseMonitor(
                     noiseText.text = getNoiseLevel("noise_level_db", db.toInt())
 
                     when {
-                        db >= zepa.noiseThresholds.dbWarning ->
-                            noiseCard.setCardBackgroundColor(Color.RED)
-                        db >= zepa.noiseThresholds.dbSafe ->
-                            noiseCard.setCardBackgroundColor(Color.YELLOW)
-                        else ->
-                            noiseCard.setCardBackgroundColor(Color.GREEN)
+                        db >= mockWarningDb -> noiseCard.setCardBackgroundColor(Color.RED)
+                        db >= mockSafeDb -> noiseCard.setCardBackgroundColor(Color.YELLOW)
+                        else -> noiseCard.setCardBackgroundColor(Color.GREEN)
                     }
 
                     // Alert only on sustained noise
                     if (sustained && !alertShown) {
                         Log.d(LOG_TAG, "Sustained high noise detected! Triggering UI warning.")
                         alertShown = true
-                        onWarning(zepa)
+                        // Using a Toast instead of onWarning(zepa) to avoid needing a real Zepa object
+                        Toast.makeText(activity, "Alerta: Mucho ruido en la ZEPA simulada", Toast.LENGTH_SHORT).show()
                     }
                     if (!sustained) {
                         alertShown = false
