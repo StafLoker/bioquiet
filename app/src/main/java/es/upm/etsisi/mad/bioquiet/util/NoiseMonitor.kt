@@ -86,7 +86,7 @@ class NoiseMonitor(
                 // Calculate decibels from MediaRecorder's max amplitude
                 val maxAmplitude = mediaRecorder?.maxAmplitude ?: 0
                 val db = if (maxAmplitude > 0) {
-                    20.0 * log10(maxAmplitude.toDouble())
+                    20.0 * log10(maxAmplitude.toDouble()) - 15
                 } else {
                     0.0
                 }
