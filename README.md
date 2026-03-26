@@ -28,16 +28,14 @@
 - Monitorización del nivel de ruido en tiempo real (dB)
 - Alertas visuales (verde / amarillo / rojo) según los umbrales de cada ZEPA
 - Notificación cuando se supera el umbral de advertencia
+- Estadística de ruido generado por usuario
 
+# Como usar
 
-# Installation
+_AVISO: Tener conexion con internet para ver la zonas ZEPA cercanas._
 
-1. Clona el repositorio
-2. Abre el proyecto en Android Studio
-3. Conecta un dispositivo físico o inicia un emulador con Android 11 (API 30) o superior
-4. Ejecuta la aplicación con **Run > Run 'app'**
-
-> Se requiere conexión a internet para cargar el mapa y los datos de las ZEPAs.
+Dar permisos necesarios que presta la aplicación y disfrutar del uso. En caso que se interesan las estatisticas pasar a 'Statistics'.
+Toda funcionalidad principal esta en 'Map'.
 
 # Screenshots
 
@@ -51,3 +49,10 @@
     <td></td>
   </tr>
 </table>
+
+# Participantes
+
+- _Stefan Oshchypok_ # stefan.oshchypok@alumnos.upm.es
+- _Manuel Adrian Mora Medina_ # manuel.mmedina@alumnos.upm.es
+
+Carga de trabajo 50%/50%.
