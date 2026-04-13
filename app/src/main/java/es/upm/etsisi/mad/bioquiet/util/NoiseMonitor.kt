@@ -5,11 +5,9 @@ import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.media.MediaRecorder
-import android.os.Build
 import android.util.Log
 import android.view.View
 import android.widget.TextView
-import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.LifecycleCoroutineScope
@@ -23,6 +21,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.log10
 
+@Suppress("DEPRECATION")
 class NoiseMonitor(
     private val activity: FragmentActivity,
     private val noiseCard: MaterialCardView,
@@ -52,7 +51,6 @@ class NoiseMonitor(
     private val warningHistory = ArrayDeque<Boolean>(WARNING_WINDOW)
     private val storageManager = NoiseStorageManager(activity)
 
-    @RequiresApi(Build.VERSION_CODES.S)
     fun start() {
         if (!hasPermission()) {
             Log.e(LOG_TAG, "Cannot start: RECORD_AUDIO permission not granted.")
@@ -144,7 +142,6 @@ class NoiseMonitor(
         alertShown = false
     }
 
-    @RequiresApi(Build.VERSION_CODES.S)
     fun resume() {
         if (!capturing) {
             Log.d(LOG_TAG, "Resuming NoiseMonitor.")
@@ -157,7 +154,6 @@ class NoiseMonitor(
         pause()
     }
 
-    @RequiresApi(Build.VERSION_CODES.S)
     @SuppressLint("MissingPermission")
     private fun startListening() {
         if (capturing) return
@@ -166,7 +162,7 @@ class NoiseMonitor(
             val dummyFile = "${activity.cacheDir.absolutePath}/dummy_audio.3gp"
             Log.d(LOG_TAG, "Initializing MediaRecorder with dummy file: $dummyFile")
 
-            mediaRecorder = MediaRecorder(activity).apply {
+            mediaRecorder = MediaRecorder().apply {
                 setAudioSource(MediaRecorder.AudioSource.MIC)
                 setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
                 setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
