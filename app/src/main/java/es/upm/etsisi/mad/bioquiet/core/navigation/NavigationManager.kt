@@ -21,9 +21,11 @@ class NavigationManager(
                 R.id.nav_map -> Intent(context, MainActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
                 }
+
                 R.id.nav_stats -> Intent(context, AccountActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
                 }
+
                 else -> return@setOnItemSelectedListener false
             }
 

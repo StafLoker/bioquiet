@@ -35,7 +35,8 @@ class NoiseRepository(context: Context) {
 
     fun saveRecord(zepaName: String, decibels: Int) {
         try {
-            val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+            val timestamp =
+                SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
             FileWriter(file, true).use { it.append("$timestamp,\"$zepaName\",$decibels\n") }
             Log.d(LOG_TAG, "Saved: $decibels dB in $zepaName")
         } catch (e: Exception) {

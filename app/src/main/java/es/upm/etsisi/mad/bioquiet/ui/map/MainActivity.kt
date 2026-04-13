@@ -27,8 +27,8 @@ import com.google.android.material.card.MaterialCardView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import es.upm.etsisi.mad.bioquiet.R
-import es.upm.etsisi.mad.bioquiet.core.map.buildUserLocationOverlay
 import es.upm.etsisi.mad.bioquiet.core.map.ZepaMapManager
+import es.upm.etsisi.mad.bioquiet.core.map.buildUserLocationOverlay
 import es.upm.etsisi.mad.bioquiet.core.navigation.NavigationManager
 import es.upm.etsisi.mad.bioquiet.core.noise.NoiseLevel
 import es.upm.etsisi.mad.bioquiet.core.noise.NoiseMonitor
@@ -114,8 +114,13 @@ class MainActivity : AppCompatActivity() {
         zepaMapManager.fetchAndDraw()
 
         map.addMapListener(object : MapListener {
-            override fun onScroll(event: ScrollEvent?): Boolean { zepaMapManager.fetchAndDraw(); return true }
-            override fun onZoom(event: ZoomEvent?): Boolean { zepaMapManager.fetchAndDraw(); return true }
+            override fun onScroll(event: ScrollEvent?): Boolean {
+                zepaMapManager.fetchAndDraw(); return true
+            }
+
+            override fun onZoom(event: ZoomEvent?): Boolean {
+                zepaMapManager.fetchAndDraw(); return true
+            }
         })
     }
 
@@ -140,7 +145,8 @@ class MainActivity : AppCompatActivity() {
             if (point != null) {
                 map.controller.animateTo(point)
             } else {
-                Toast.makeText(this, "No podemos encontrar tu localización", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "No podemos encontrar tu localización", Toast.LENGTH_SHORT)
+                    .show()
             }
         }
     }
@@ -172,8 +178,10 @@ class MainActivity : AppCompatActivity() {
                                 "Estás en ${event.zepaName}. ¡Por favor, reduce el ruido!",
                                 Snackbar.LENGTH_LONG
                             ).show()
+
                         is MainEvent.ShowError ->
-                            Toast.makeText(this@MainActivity, event.message, Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this@MainActivity, event.message, Toast.LENGTH_SHORT)
+                                .show()
                     }
                 }
             }
@@ -203,7 +211,7 @@ class MainActivity : AppCompatActivity() {
             when (state.noiseLevel) {
                 NoiseLevel.WARNING -> Color.RED
                 NoiseLevel.CAUTION -> Color.YELLOW
-                NoiseLevel.SAFE    -> Color.GREEN
+                NoiseLevel.SAFE -> Color.GREEN
             }
         )
     }
@@ -243,7 +251,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.RECORD_AUDIO
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
             viewModel.initialize(
                 monitor = NoiseMonitor(cacheDir.absolutePath),
                 repository = NoiseRepository(this)
@@ -262,7 +274,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String?>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String?>,
+        grantResults: IntArray
+    ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode != PERMISSION_CODE) return
 
@@ -274,7 +290,8 @@ class MainActivity : AppCompatActivity() {
 
         if (denied.isNotEmpty()) {
             Log.w(LOG_TAG, "Permissions denied: $denied")
-            val permanentlyDenied = denied.filter { !ActivityCompat.shouldShowRequestPermissionRationale(this, it) }
+            val permanentlyDenied =
+                denied.filter { !ActivityCompat.shouldShowRequestPermissionRationale(this, it) }
             if (permanentlyDenied.isNotEmpty()) showPermissionSettingsDialog(permanentlyDenied)
         }
     }
@@ -285,6 +302,7 @@ class MainActivity : AppCompatActivity() {
                 Manifest.permission.RECORD_AUDIO -> "Micrófono"
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION -> "Ubicación"
+
                 else -> perm
             }
         }.distinct().joinToString(", ")

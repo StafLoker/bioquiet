@@ -6,7 +6,6 @@ import android.util.Log
 import android.view.View
 import android.widget.ProgressBar
 import androidx.lifecycle.LifecycleCoroutineScope
-import es.upm.etsisi.mad.bioquiet.core.map.ZepaLabelOverlay
 import es.upm.etsisi.mad.bioquiet.data.remote.ApiClient
 import es.upm.etsisi.mad.bioquiet.model.Zepa
 import kotlinx.coroutines.CancellationException

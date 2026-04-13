@@ -11,10 +11,10 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import es.upm.etsisi.mad.bioquiet.R
+import es.upm.etsisi.mad.bioquiet.core.navigation.NavigationManager
 import es.upm.etsisi.mad.bioquiet.data.repository.NoiseRepository
 import es.upm.etsisi.mad.bioquiet.databinding.ActivityAccountBinding
 import es.upm.etsisi.mad.bioquiet.model.Statistics
-import es.upm.etsisi.mad.bioquiet.core.navigation.NavigationManager
 import kotlinx.coroutines.launch
 
 class AccountActivity : AppCompatActivity() {
@@ -54,9 +54,11 @@ class AccountActivity : AppCompatActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
-                    binding.loadingIndicator.visibility = if (state.isLoading) View.VISIBLE else View.GONE
+                    binding.loadingIndicator.visibility =
+                        if (state.isLoading) View.VISIBLE else View.GONE
                     binding.emptyState.visibility = if (state.isEmpty) View.VISIBLE else View.GONE
-                    binding.statsContent.visibility = if (state.statistics != null) View.VISIBLE else View.GONE
+                    binding.statsContent.visibility =
+                        if (state.statistics != null) View.VISIBLE else View.GONE
                     state.statistics?.let { renderStatistics(it) }
                 }
             }
