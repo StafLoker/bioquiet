@@ -133,7 +133,6 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    // Called when activity is reused via FLAG_ACTIVITY_SINGLE_TOP
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         bottomNavigation.selectedItemId = R.id.nav_map
@@ -156,12 +155,15 @@ class MainActivity : AppCompatActivity() {
     private fun observeState() {
         val noiseCard = findViewById<MaterialCardView>(R.id.noiseCard)
         val noiseText = findViewById<TextView>(R.id.noiseLevel)
+        val usersCard = findViewById<MaterialCardView>(R.id.usersInZepaCard)
+        val usersText = findViewById<TextView>(R.id.usersInZepaCount)
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
                     renderLocation(state.userLocation)
                     renderNoiseCard(noiseCard, noiseText, state)
+                    renderUsersInZepa(usersCard, usersText, state)
                 }
             }
         }
@@ -202,6 +204,11 @@ class MainActivity : AppCompatActivity() {
         } else {
             map.controller.animateTo(point)
         }
+    }
+
+    private fun renderUsersInZepa(card: MaterialCardView, text: TextView, state: MainUiState) {
+        card.visibility = if (state.usersInZepaVisible) View.VISIBLE else View.GONE
+        text.text = getString(R.string.users_in_zepa, state.numUsersIntoZepa)
     }
 
     private fun renderNoiseCard(card: MaterialCardView, text: TextView, state: MainUiState) {

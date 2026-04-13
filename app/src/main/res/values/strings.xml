@@ -8,9 +8,20 @@
     <string name="account_section_account">Cuenta</string>
     <string name="account_section_statistics">Estadísticas</string>
     <string name="account_user_id_label">Usuario</string>
+    <string name="account_login">Entrar / Crear cuenta</string>
     <string name="account_logout">Cerrar sesión</string>
+    <string name="account_logout_confirm_message">¿Estás seguro que quieres cerrar sesión?</string>
+    <string name="account_logout_confirm_positive">Cerrar</string>
+    <string name="account_logout_confirm_negative">Cancelar</string>
+    <string name="account_logout_success">Sesión cerrada</string>
     <string name="account_no_data">No hay datos registrados aún.</string>
     <string name="account_total_records_label">Total registros</string>
     <string name="account_max_db_label">Ruido máximo</string>
     <string name="account_avg_db_label">Ruido promedio</string>
+    <string name="account_total_records_value">%d</string>
+    <string name="account_max_db_value">%d dB</string>
+    <string name="account_avg_db_value">%d dB</string>
+    <string name="users_in_zepa">%d</string>
+    <string name="feedback_high_noise">¡Advertencia! Nivel de ruido promedio alto.</string>
+    <string name="feedback_good_noise">¡Buen trabajo manteniéndolo silencioso!</string>
 </resources>

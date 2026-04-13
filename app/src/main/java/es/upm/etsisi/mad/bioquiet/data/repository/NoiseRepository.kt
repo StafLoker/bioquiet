@@ -2,6 +2,7 @@ package es.upm.etsisi.mad.bioquiet.data.repository
 
 import android.content.Context
 import android.util.Log
+import es.upm.etsisi.mad.bioquiet.R
 import es.upm.etsisi.mad.bioquiet.model.Statistics
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -14,7 +15,7 @@ import java.util.Locale
 /**
  * Persists noise records to a CSV file and computes aggregated [Statistics].
  */
-class NoiseRepository(context: Context) {
+class NoiseRepository(private val context: Context) {
 
     companion object {
         private const val LOG_TAG = "NoiseRepository"
@@ -64,9 +65,9 @@ class NoiseRepository(context: Context) {
 
             val avgDb = sumDb / count
             val feedback = if (avgDb > WARNING_AVG_DB) {
-                "Warning! High average noise level."
+                context.getString(R.string.feedback_high_noise)
             } else {
-                "Good job keeping it quiet!"
+                context.getString(R.string.feedback_good_noise)
             }
 
             Statistics(totalRecords = count, maxDb = maxDb, averageDb = avgDb, feedback = feedback)

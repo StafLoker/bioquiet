@@ -3,10 +3,13 @@ package es.upm.etsisi.mad.bioquiet.ui.map
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.ValueEventListener
 import es.upm.etsisi.mad.bioquiet.core.noise.NoiseLevel
 import es.upm.etsisi.mad.bioquiet.core.noise.NoiseMonitor
 import es.upm.etsisi.mad.bioquiet.core.noise.NoiseTracker
 import es.upm.etsisi.mad.bioquiet.data.repository.NoiseRepository
+import es.upm.etsisi.mad.bioquiet.data.repository.ZepaUserRepository
 import es.upm.etsisi.mad.bioquiet.model.Zepa
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -28,7 +31,9 @@ data class MainUiState(
     val currentZepa: Zepa? = null,
     val noiseDb: Double = 0.0,
     val noiseLevel: NoiseLevel = NoiseLevel.SAFE,
-    val noiseCardVisible: Boolean = false
+    val noiseCardVisible: Boolean = false,
+    val numUsersIntoZepa: Int = 0,
+    val usersInZepaVisible: Boolean = false
 )
 
 sealed class MainEvent {
@@ -54,7 +59,33 @@ class MainViewModel : ViewModel() {
     private var noiseMonitor: NoiseMonitor? = null
     private var noiseRepository: NoiseRepository? = null
     private var noiseJob: Job? = null
+
+    private val zepaUserRepository = ZepaUserRepository()
+    private var zepaUserListener: ValueEventListener? = null
     private var alertShown = false
+
+    private val authListener = FirebaseAuth.AuthStateListener { auth ->
+        val currentZepa = _uiState.value.currentZepa
+        if (auth.currentUser == null) {
+            // Logged out — stop observing and hide pill
+            currentZepa?.id?.let { id ->
+                zepaUserListener?.let { zepaUserRepository.stopObserving(id, it) }
+                zepaUserListener = null
+            }
+            _uiState.update { it.copy(numUsersIntoZepa = 0, usersInZepaVisible = false) }
+        } else {
+            // Logged in — force re-enter current ZEPA if inside one
+            if (currentZepa != null) {
+                _uiState.update { it.copy(currentZepa = null) }
+                onZepaChanged(currentZepa)
+                _uiState.update { it.copy(currentZepa = currentZepa) }
+            }
+        }
+    }
+
+    init {
+        FirebaseAuth.getInstance().addAuthStateListener(authListener)
+    }
 
     // ─── Initialisation ─────────────────────────────────────────────────────
 
@@ -70,7 +101,9 @@ class MainViewModel : ViewModel() {
     // ─── Location ───────────────────────────────────────────────────────────
 
     fun onLocationChanged(point: GeoPoint, currentZepaFinder: (GeoPoint) -> Zepa?) {
-        _uiState.update { it.copy(userLocation = point, currentZepa = currentZepaFinder(point)) }
+        val zepa = currentZepaFinder(point)
+        onZepaChanged(zepa)
+        _uiState.update { it.copy(userLocation = point, currentZepa = zepa) }
     }
 
     fun onInitialLocation(point: GeoPoint) {
@@ -81,12 +114,41 @@ class MainViewModel : ViewModel() {
 
     fun onZepaListUpdated(currentZepaFinder: (GeoPoint) -> Zepa?) {
         val location = _uiState.value.userLocation ?: return
-        _uiState.update { it.copy(currentZepa = currentZepaFinder(location)) }
+        val zepa = currentZepaFinder(location)
+        onZepaChanged(zepa)
+        _uiState.update { it.copy(currentZepa = zepa) }
     }
 
     fun onMapError() {
         viewModelScope.launch {
             _events.emit(MainEvent.ShowError("Error al conectar con el servidor"))
+        }
+    }
+
+    // ─── Runtime DB ─────────────────────────────────────────────────────────
+
+    private fun onZepaChanged(newZepa: Zepa?) {
+        val oldId = _uiState.value.currentZepa?.id
+        val newId = newZepa?.id
+
+        if (newId == oldId) return
+
+        oldId?.let { id ->
+            zepaUserRepository.leaveZepa(id)
+            zepaUserListener?.let { zepaUserRepository.stopObserving(id, it) }
+            zepaUserListener = null
+        }
+
+        if (newId == null) {
+            Log.d(LOG_TAG, "Outside all ZEPAs")
+            _uiState.update { it.copy(numUsersIntoZepa = 0, usersInZepaVisible = false) }
+            return
+        }
+
+        Log.d(LOG_TAG, "onZepaChanged: $oldId -> $newId")
+        zepaUserRepository.enterZepa(newId)
+        zepaUserListener = zepaUserRepository.observeZepaUserCount(newId) { count ->
+            _uiState.update { it.copy(numUsersIntoZepa = count, usersInZepaVisible = true) }
         }
     }
 
@@ -152,6 +214,11 @@ class MainViewModel : ViewModel() {
 
     override fun onCleared() {
         super.onCleared()
+        FirebaseAuth.getInstance().removeAuthStateListener(authListener)
         pauseNoiseMonitor()
+        _uiState.value.currentZepa?.id?.let { id ->
+            zepaUserRepository.leaveZepa(id)
+            zepaUserListener?.let { zepaUserRepository.stopObserving(id, it) }
+        }
     }
 }
