@@ -3,4 +3,14 @@
     <string name="noise_level_db">%d dB</string>
     <string name="noise_level_default">-- dB</string>
     <string name="fab_my_location">Mi ubicación</string>
+    <string name="map">Mapa</string>
+    <string name="account">Cuenta</string>
+    <string name="account_section_account">Cuenta</string>
+    <string name="account_section_statistics">Estadísticas</string>
+    <string name="account_user_id_label">Usuario</string>
+    <string name="account_logout">Cerrar sesión</string>
+    <string name="account_no_data">No hay datos registrados aún.</string>
+    <string name="account_total_records_label">Total registros</string>
+    <string name="account_max_db_label">Ruido máximo</string>
+    <string name="account_avg_db_label">Ruido promedio</string>
 </resources>

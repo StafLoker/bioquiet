@@ -1,4 +1,4 @@
-package es.upm.etsisi.mad.bioquiet.components
+package es.upm.etsisi.mad.bioquiet.core.map
 
 import android.graphics.Canvas
 import android.graphics.Paint
