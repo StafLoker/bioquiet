@@ -1,3 +1,5 @@
+
+https://github.com/user-attachments/assets/80662d01-f067-4706-88c9-4eb3b3c2be33
 <div align="center">
    <img width="150" height="150" src="logo.png" alt="Logo" />
    <h1><b>BioQuiet</b></h1>
@@ -62,11 +64,7 @@ Toda funcionalidad principal está en 'Map'.
 
 # Demo Video
 
-<div align="center">
-  <video src="assets/bioquiet_video.mp4" width="600" controls>
-    Tu navegador no soporta la reproducción de vídeo. Puedes descargarlo <a href="assets/bioquiet_video.mp4">aquí</a>.
-  </video>
-</div>
+https://github.com/user-attachments/assets/1754d624-9623-4d7d-8942-2e61cd912954
 
 ---
 
