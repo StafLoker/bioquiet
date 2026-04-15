@@ -5,6 +5,25 @@ All notable changes to BioQuiet will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-04-14
+
+### Added
+
+- Sign in/up with Firebase Authentication (Email and Google providers)
+- Realtime count of users in the current user's ZEPA
+
+### Improved
+
+- Statistics UI
+
+### Refactored
+
+- MVVM architecture
+
+### Fixed
+
+- Noise monitoring not starting after several actions
+
 ## [1.1.0] - 2026-03-23
 
 ### Added
