@@ -17,38 +17,58 @@
 
    <p>Aplicación Android para monitorizar el nivel de ruido en Zonas de Especial Protección para las Aves (ZEPA). Avisa al usuario cuando supera los umbrales de ruido permitidos para proteger la fauna local.</p>
 
-   <img src="assets/screenshot_1.png" height="500" alt="Screenshot" />
+   <img src="assets/screenshot_1.jpeg" height="500" alt="Screenshot Principal" />
 </div>
 
+---
 
 # Features
 
-- Mapa interactivo con las ZEPAs de la zona visible
-- Detección automática de entrada/salida en zonas ZEPA
-- Monitorización del nivel de ruido en tiempo real (dB)
-- Alertas visuales (verde / amarillo / rojo) según los umbrales de cada ZEPA
-- Notificación cuando se supera el umbral de advertencia
-- Estadística de ruido generado por usuario
+- **[NUEVO]** Inicio de sesión/Registro con Firebase Authentication (Email y Google).
+- **[NUEVO]** Contador en tiempo real de usuarios en la ZEPA actual.
+- **[NUEVO]** Arquitectura refactorizada a MVVM.
+- Mapa interactivo con las ZEPAs de la zona visible.
+- Detección automática de entrada/salida en zonas ZEPA.
+- Monitorización del nivel de ruido en tiempo real (dB).
+- Alertas visuales (verde / amarillo / rojo) según los umbrales de cada ZEPA.
+- Notificación cuando se supera el umbral de advertencia.
+- Estadística de ruido generado por usuario (UI Mejorada).
 
 # Como usar
 
-_AVISO: Tener conexion con internet para ver la zonas ZEPA cercanas._
+_AVISO: Tener conexión a internet para ver las zonas ZEPA cercanas._
 
-Dar permisos necesarios que presta la aplicación y disfrutar del uso. En caso que se interesan las estatisticas pasar a 'Statistics'.
-Toda funcionalidad principal esta en 'Map'.
+Dar permisos necesarios que pide la aplicación y disfrutar del uso. En caso de que interesen las estadísticas, pasar a 'Statistics'.
+Toda funcionalidad principal está en 'Map'.
 
 # Screenshots
 
 <table>
   <tr>
-    <td><img src="assets/screenshot_1.png" width="200" /></td>
-    <td><img src="assets/screenshot_2.png" width="200" /></td>
+    <td><img src="assets/screenshot_1.jpeg" width="200" /></td>
+    <td><img src="assets/screenshot_2.jpeg" width="200" /></td>
+    <td><img src="assets/screenshot_3.jpeg" width="200" /></td>
   </tr>
   <tr>
-    <td><img src="assets/screenshot_3.png" width="200" /></td>
-    <td></td>
+    <td><img src="assets/screenshot_4.jpeg" width="200" /></td>
+    <td><img src="assets/screenshot_5.jpeg" width="200" /></td>
+    <td><img src="assets/screenshot_6.jpeg" width="200" /></td>
+  </tr>
+  <tr>
+    <td><img src="assets/screenshot_7.jpeg" width="200" /></td>
+    <td><img src="assets/screenshot_8.jpeg" width="200" /></td>
   </tr>
 </table>
+
+# Demo Video
+
+<div align="center">
+  <video src="assets/bioquiet_video.mp4" width="600" controls>
+    Tu navegador no soporta la reproducción de vídeo. Puedes descargarlo <a href="assets/bioquiet_video.mp4">aquí</a>.
+  </video>
+</div>
+
+---
 
 # Participantes
 
