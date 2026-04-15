@@ -1,5 +1,3 @@
-
-https://github.com/user-attachments/assets/80662d01-f067-4706-88c9-4eb3b3c2be33
 <div align="center">
    <img width="150" height="150" src="logo.png" alt="Logo" />
    <h1><b>BioQuiet</b></h1>
