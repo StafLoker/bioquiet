@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "805459774198",
+    "firebase_url": "https://bioquiet-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "bioquiet",
+    "storage_bucket": "bioquiet.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:805459774198:android:bb009bc7cbca1f9d533ad7",
+        "android_client_info": {
+          "package_name": "es.upm.etsisi.mad.bioquiet"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "805459774198-vsrmdlntitrhg69keedl8ojlcd9koe0q.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCh_FLFASDjKMBoGlvy4OsPB8u5UqsvoIw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "805459774198-vsrmdlntitrhg69keedl8ojlcd9koe0q.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
