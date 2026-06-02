@@ -24,15 +24,14 @@
 
 # Features
 
-- **[NUEVO]** Inicio de sesión/Registro con Firebase Authentication (Email y Google).
-- **[NUEVO]** Contador en tiempo real de usuarios en la ZEPA actual.
-- **[NUEVO]** Arquitectura refactorizada a MVVM.
 - Mapa interactivo con las ZEPAs de la zona visible.
 - Detección automática de entrada/salida en zonas ZEPA.
 - Monitorización del nivel de ruido en tiempo real (dB).
 - Alertas visuales (verde / amarillo / rojo) según los umbrales de cada ZEPA.
 - Notificación cuando se supera el umbral de advertencia.
 - Estadística de ruido generado por usuario (UI Mejorada).
+- Inicio de sesión/Registro con Firebase Authentication (Email y Google).
+- Contador en tiempo real de usuarios en la ZEPA actual.
 
 # Como usar
 
